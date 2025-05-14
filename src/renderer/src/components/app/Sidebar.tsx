@@ -24,7 +24,7 @@ import {
   Sun,
   SunMoon
 } from 'lucide-react'
-import { FC, useEffect } from 'react'
+import { FC, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
@@ -32,6 +32,12 @@ import styled from 'styled-components'
 import DragableList from '../DragableList'
 import MinAppIcon from '../Icons/MinAppIcon'
 import UserPopup from '../Popups/UserPopup'
+
+// Define a helper to check for Electron renderer environment
+const isElectronRenderer = () =>
+  typeof window !== 'undefined' &&
+  typeof window.electron !== 'undefined' &&
+  typeof window.electron.ipcRenderer !== 'undefined';
 
 const Sidebar: FC = () => {
   const { hideMinappPopup, openMinapp } = useMinappPopup()
@@ -89,11 +95,16 @@ const Sidebar: FC = () => {
         )}
       </MainMenusContainer>
       <Menus>
-        <Tooltip title={t('docs.title')} mouseEnterDelay={0.8} placement="right">
-          <Icon theme={theme} onClick={onOpenDocs} className={minappShow && currentMinappId === docsId ? 'active' : ''}>
-            <CircleHelp size={20} className="icon" />
-          </Icon>
-        </Tooltip>
+        {/* Docs Icon */}
+        {isElectronRenderer() && (
+          <Tooltip title={t('docs.title')} mouseEnterDelay={0.8} placement="right">
+            <Icon theme={theme} onClick={onOpenDocs} className={minappShow && currentMinappId === docsId ? 'active' : ''}>
+              <CircleHelp size={20} className="icon" />
+            </Icon>
+          </Tooltip>
+        )}
+
+        {/* Theme Icon - Always visible */}
         <Tooltip
           title={t('settings.theme.title') + ': ' + t(`settings.theme.${settingTheme}`)}
           mouseEnterDelay={0.8}
@@ -108,17 +119,21 @@ const Sidebar: FC = () => {
             )}
           </Icon>
         </Tooltip>
-        <Tooltip title={t('settings.title')} mouseEnterDelay={0.8} placement="right">
-          <StyledLink
-            onClick={async () => {
-              hideMinappPopup()
-              await to('/settings/provider')
-            }}>
-            <Icon theme={theme} className={pathname.startsWith('/settings') && !minappShow ? 'active' : ''}>
-              <Settings size={20} className="icon" />
-            </Icon>
-          </StyledLink>
-        </Tooltip>
+
+        {/* Settings Icon */}
+        {isElectronRenderer() && (
+          <Tooltip title={t('settings.title')} mouseEnterDelay={0.8} placement="right">
+            <StyledLink
+              onClick={async () => {
+                hideMinappPopup()
+                await to('/settings/provider')
+              }}>
+              <Icon theme={theme} className={pathname.startsWith('/settings') && !minappShow ? 'active' : ''}>
+                <Settings size={20} className="icon" />
+              </Icon>
+            </StyledLink>
+          </Tooltip>
+        )}
       </Menus>
     </Container>
   )
@@ -156,7 +171,18 @@ const MainMenus: FC = () => {
     files: '/files'
   }
 
-  return sidebarIcons.visible.map((icon) => {
+  // Filter icons based on environment
+  const visibleIcons = useMemo(() => {
+    if (!isElectronRenderer()) {
+      // In web environment, only show 'assistants' (Chat) and 'minapp' (Mini Apps)
+      return sidebarIcons.visible.filter(icon => icon === 'assistants' || icon === 'minapp');
+    } else {
+      // In Electron environment, use the configured visible icons
+      return sidebarIcons.visible;
+    }
+  }, [sidebarIcons.visible]);
+
+  return visibleIcons.map((icon) => {
     const path = pathMap[icon]
     const isActive = path === '/' ? isRoute(path) : isRoutes(path)
 

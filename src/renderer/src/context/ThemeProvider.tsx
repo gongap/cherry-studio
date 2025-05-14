@@ -78,6 +78,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, defaultT
     };
   }, []); // Empty dependency array to run once on mount and clean up on unmount
 
+  // Add useEffect to sync effectiveTheme with theme setting
+  useEffect(() => {
+    setEffectiveTheme(theme);
+  }, [theme]);
+
   return <ThemeContext value={{ theme: effectiveTheme, settingTheme: theme, toggleTheme }}>{children}</ThemeContext>;
 };
 

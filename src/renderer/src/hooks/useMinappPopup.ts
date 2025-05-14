@@ -9,6 +9,8 @@ import {
 } from '@renderer/store/runtime'
 import { MinAppType } from '@renderer/types'
 
+const isElectronRenderer = typeof window !== 'undefined' && typeof (window as any).electron !== 'undefined';
+
 /**
  * Usage:
  *
@@ -30,6 +32,13 @@ export const useMinappPopup = () => {
 
   /** Open a minapp (popup shows and minapp loaded) */
   const openMinapp = (app: MinAppType, keepAlive: boolean = false) => {
+    // New logic for web environment: open in new tab
+    if (!isElectronRenderer && app.url) {
+      window.open(app.url, '_blank');
+      // In-app popup logic will not proceed in this case
+      return;
+    }
+
     if (keepAlive) {
       // 如果小程序已经打开，只切换显示
       if (openedKeepAliveMinapps.some((item) => item.id === app.id)) {
