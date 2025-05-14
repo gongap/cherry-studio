@@ -120,20 +120,18 @@ const Sidebar: FC = () => {
           </Icon>
         </Tooltip>
 
-        {/* Settings Icon */}
-        {isElectronRenderer() && (
-          <Tooltip title={t('settings.title')} mouseEnterDelay={0.8} placement="right">
-            <StyledLink
-              onClick={async () => {
-                hideMinappPopup()
-                await to('/settings/provider')
-              }}>
-              <Icon theme={theme} className={pathname.startsWith('/settings') && !minappShow ? 'active' : ''}>
-                <Settings size={20} className="icon" />
-              </Icon>
-            </StyledLink>
-          </Tooltip>
-        )}
+        {/* Settings Icon - Always visible in web */}
+        <Tooltip title={t('settings.title')} mouseEnterDelay={0.8} placement="right">
+          <StyledLink
+            onClick={async () => {
+              hideMinappPopup()
+              await to('/settings/provider')
+            }}>
+            <Icon theme={theme} className={pathname.startsWith('/settings') && !minappShow ? 'active' : ''}>
+              <Settings size={20} className="icon" />
+            </Icon>
+          </StyledLink>
+        </Tooltip>
       </Menus>
     </Container>
   )
