@@ -33,6 +33,12 @@ import SiyuanSettings from './SiyuanSettings'
 import WebDavSettings from './WebDavSettings'
 import YuqueSettings from './YuqueSettings'
 
+// Define a helper to check for Electron renderer environment
+const isElectronRenderer = () =>
+  typeof window !== 'undefined' &&
+  typeof window.electron !== 'undefined' &&
+  typeof window.electron.ipcRenderer !== 'undefined';
+
 const DataSettings: FC = () => {
   const { t } = useTranslation()
   const [appInfo, setAppInfo] = useState<AppInfo>()
@@ -105,16 +111,22 @@ const DataSettings: FC = () => {
   ]
 
   useEffect(() => {
-    window.api.getAppInfo().then(setAppInfo)
-  }, [])
+    // Only attempt to get app info in Electron environment
+    if (isElectronRenderer()) {
+      window.api.getAppInfo().then(setAppInfo);
+    }
+  }, []);
 
   const handleOpenPath = (path?: string) => {
     if (!path) return
-    if (path?.endsWith('log')) {
-      const dirPath = path.split(/[/\\]/).slice(0, -1).join('/')
-      window.api.openPath(dirPath)
-    } else {
-      window.api.openPath(path)
+    // Only open paths in Electron environment
+    if (isElectronRenderer() && window.api?.openPath) {
+      if (path?.endsWith('log')) {
+        const dirPath = path.split(/[/\\]/).slice(0, -1).join('/')
+        window.api.openPath(dirPath)
+      } else {
+        window.api.openPath(path)
+      }
     }
   }
 
@@ -178,6 +190,32 @@ const DataSettings: FC = () => {
             <SettingGroup theme={theme}>
               <SettingTitle>{t('settings.data.title')}</SettingTitle>
               <SettingDivider />
+              {/* Display App Info and related actions only in Electron */}
+              {isElectronRenderer() && appInfo && (
+                <>
+                  <SettingRow>
+                    <SettingRowTitle>{t('settings.data.app_info.data_path')}</SettingRowTitle>
+                    <Typography.Text code>{appInfo.dataPath}</Typography.Text>
+                    <Button size="small" onClick={() => handleOpenPath(appInfo.dataPath)}>
+                      <FolderOpenOutlined /> {t('common.open')}
+                    </Button>
+                  </SettingRow>
+                  <SettingDivider />
+                  <SettingRow>
+                    <SettingRowTitle>{t('settings.data.app_info.logs_path')}</SettingRowTitle>
+                    <Typography.Text code>{appInfo.logsPath}</Typography.Text>
+                    <Button size="small" onClick={() => handleOpenPath(appInfo.logsPath)}>
+                      <FolderOpenOutlined /> {t('common.open')}
+                    </Button>
+                  </SettingRow>
+                  <SettingDivider />
+                  <SettingRow>
+                    <SettingRowTitle>{t('settings.data.app_info.app_version')}</SettingRowTitle>
+                    <Typography.Text code>{appInfo.appVersion}</Typography.Text>
+                  </SettingRow>
+                  <SettingDivider />
+                </>
+              )}
               <SettingRow>
                 <SettingRowTitle>{t('settings.general.backup.title')}</SettingRowTitle>
                 <HStack gap="5px" justifyContent="space-between">

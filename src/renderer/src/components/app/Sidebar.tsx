@@ -39,7 +39,14 @@ const isElectronRenderer = () =>
   typeof window.electron !== 'undefined' &&
   typeof window.electron.ipcRenderer !== 'undefined';
 
-const Sidebar: FC = () => {
+// Define props for the Sidebar component
+interface SidebarProps {
+  isAuthenticated: boolean;
+  username: string | null;
+  handleLogout: () => void;
+}
+
+const Sidebar: FC<SidebarProps> = ({ isAuthenticated, username, handleLogout }) => {
   const { hideMinappPopup, openMinapp } = useMinappPopup()
   const { minappShow, currentMinappId } = useRuntime()
   const { sidebarIcons } = useSettings()
@@ -75,7 +82,20 @@ const Sidebar: FC = () => {
 
   return (
     <Container id="app-sidebar" style={{ backgroundColor, zIndex: minappShow ? 10000 : 'initial' }}>
-      {isEmoji(avatar) ? (
+      {/* Conditionally render Avatar based on environment and authentication */}
+      {!isElectronRenderer() && isAuthenticated ? (
+        <Dropdown menu={{ items: [
+          { key: 'username', label: username, disabled: true },
+          { type: 'divider' },
+          { key: 'logout', label: t('settings.logout'), onClick: handleLogout },
+        ] }} trigger={['click']} placement="bottomRight">
+          {isEmoji(avatar) ? (
+            <EmojiAvatar>{avatar}</EmojiAvatar>
+          ) : (
+            <AvatarImg src={avatar || UserAvatar} draggable={false} className="nodrag" />
+          )}
+        </Dropdown>
+      ) : isEmoji(avatar) ? (
         <EmojiAvatar onClick={onEditUser}>{avatar}</EmojiAvatar>
       ) : (
         <AvatarImg src={avatar || UserAvatar} draggable={false} className="nodrag" onClick={onEditUser} />
