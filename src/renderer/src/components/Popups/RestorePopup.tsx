@@ -6,6 +6,12 @@ import { useTranslation } from 'react-i18next'
 
 import { TopView } from '../TopView'
 
+// Define a helper to check for Electron renderer environment locally
+const isElectronRenderer = () =>
+  typeof window !== 'undefined' &&
+  typeof window.electron !== 'undefined' &&
+  typeof window.electron.ipcRenderer !== 'undefined';
+
 interface Props {
   resolve: (data: any) => void
 }
@@ -21,15 +27,18 @@ const PopupContainer: React.FC<Props> = ({ resolve }) => {
   const [progressData, setProgressData] = useState<ProgressData>()
   const { t } = useTranslation()
 
-  useEffect(() => {
-    const removeListener = window.electron.ipcRenderer.on(IpcChannel.RestoreProgress, (_, data: ProgressData) => {
-      setProgressData(data)
-    })
+  // Only set up IPC listener effect in Electron environment
+  if (isElectronRenderer()) {
+    useEffect(() => {
+      const removeListener = window.electron.ipcRenderer.on(IpcChannel.RestoreProgress, (_, data: ProgressData) => {
+        setProgressData(data)
+      })
 
-    return () => {
-      removeListener()
-    }
-  }, [])
+      return () => {
+        removeListener()
+      }
+    }, []) // Empty dependency array as the effect should only run once on mount in Electron
+  }
 
   const onOk = async () => {
     await restore()
@@ -91,6 +100,12 @@ export default class RestorePopup {
     TopView.hide(TopViewKey)
   }
   static show() {
+    // Prevent showing popup or its Electron-specific logic in web environment
+    if (!isElectronRenderer()) {
+      console.warn('Restore functionality is only available in the Electron client.');
+      return Promise.resolve({}); // Return a resolved promise to avoid breaking expected flow
+    }
+
     return new Promise<any>((resolve) => {
       TopView.show(
         <PopupContainer

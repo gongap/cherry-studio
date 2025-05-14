@@ -6,6 +6,12 @@ import { useTranslation } from 'react-i18next'
 
 import { TopView } from '../TopView'
 
+// Define a helper to check for Electron renderer environment locally
+const isElectronRenderer = () =>
+  typeof window !== 'undefined' &&
+  typeof window.electron !== 'undefined' &&
+  typeof window.electron.ipcRenderer !== 'undefined';
+
 interface Props {
   resolve: (data: any) => void
 }
@@ -21,17 +27,24 @@ const PopupContainer: React.FC<Props> = ({ resolve }) => {
   const [progressData, setProgressData] = useState<ProgressData>()
   const { t } = useTranslation()
 
+  // Only register IPC listener in Electron environment
   useEffect(() => {
-    const removeListener = window.electron.ipcRenderer.on(IpcChannel.BackupProgress, (_, data: ProgressData) => {
-      setProgressData(data)
-    })
+    if (isElectronRenderer()) {
+      const removeListener = window.electron.ipcRenderer.on(IpcChannel.BackupProgress, (_, data: ProgressData) => {
+        setProgressData(data)
+      })
 
-    return () => {
-      removeListener()
+      return () => {
+        removeListener()
+      }
     }
+    // If not in Electron, return a cleanup function that does nothing
+    return () => {};
   }, [])
 
   const onOk = async () => {
+    // The actual backup logic also likely needs to be Electron-specific or handled differently in web
+    // For now, we'll assume the backup service itself handles the environment or we'll address it later if needed.
     await backup()
     setOpen(false)
   }
@@ -91,6 +104,13 @@ export default class BackupPopup {
     TopView.hide(TopViewKey)
   }
   static show() {
+    // Prevent showing popup or its Electron-specific logic in web environment
+    if (!isElectronRenderer()) {
+      console.warn('Backup functionality is only available in the Electron client.');
+      return Promise.resolve({}); // Return a resolved promise to avoid breaking expected flow
+    }
+
+    // Original logic to show the popup using TopView.show - only executed in Electron
     return new Promise<any>((resolve) => {
       TopView.show(
         <PopupContainer

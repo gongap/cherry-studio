@@ -33,6 +33,12 @@ import SiyuanSettings from './SiyuanSettings'
 import WebDavSettings from './WebDavSettings'
 import YuqueSettings from './YuqueSettings'
 
+// Define a helper to check for Electron renderer environment locally
+const isElectronRenderer = () =>
+  typeof window !== 'undefined' &&
+  typeof window.electron !== 'undefined' &&
+  typeof window.electron.ipcRenderer !== 'undefined';
+
 const DataSettings: FC = () => {
   const { t } = useTranslation()
   const [appInfo, setAppInfo] = useState<AppInfo>()
@@ -105,7 +111,10 @@ const DataSettings: FC = () => {
   ]
 
   useEffect(() => {
-    window.api.getAppInfo().then(setAppInfo)
+    // Only attempt to get app info in Electron environment
+    if (isElectronRenderer()) {
+      window.api.getAppInfo().then(setAppInfo)
+    }
   }, [])
 
   const handleOpenPath = (path?: string) => {

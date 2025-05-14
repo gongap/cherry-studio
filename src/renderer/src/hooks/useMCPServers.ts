@@ -10,21 +10,24 @@ const isElectronRenderer = typeof window !== 'undefined' && typeof window.electr
 // Use 'any' type for ipcRenderer to bypass strict Electron type checking in web context
 let ipcRenderer: any | undefined;
 
+// Only assign ipcRenderer and set up listeners if in Electron environment
 if (isElectronRenderer) {
-  // Assign ipcRenderer only if in Electron environment
   ipcRenderer = window.electron.ipcRenderer;
 
+  // Cast IpcChannel to any to allow property access in the Electron context
+  const electronIpcChannel = IpcChannel as any;
+
   // Listen for server changes from main process
-  ipcRenderer.on(IpcChannel.Mcp_ServersChanged, (_event: any, servers: MCPServer[]) => {
+  ipcRenderer.on(electronIpcChannel.Mcp_ServersChanged, (_event: any, servers: MCPServer[]) => {
     store.dispatch(setMCPServers(servers));
   });
-  ipcRenderer.on(IpcChannel.Mcp_AddServer, (_event: any, server: MCPServer) => {
+  ipcRenderer.on(electronIpcChannel.Mcp_AddServer, (_event: any, server: MCPServer) => {
     store.dispatch(addMCPServer(server));
   });
-  ipcRenderer.on(IpcChannel.Mcp_DeleteServer, (_event: any, serverId: string) => {
+  ipcRenderer.on(electronIpcChannel.Mcp_DeleteServer, (_event: any, serverId: string) => {
     store.dispatch(deleteMCPServer(serverId));
   });
-  ipcRenderer.on(IpcChannel.Mcp_UpdateServer, (_event: any, server: MCPServer) => {
+  ipcRenderer.on(electronIpcChannel.Mcp_UpdateServer, (_event: any, server: MCPServer) => {
     store.dispatch(updateMCPServer(server));
   });
   // Add checks for other ipcRenderer.on calls if they exist later in the file
@@ -35,10 +38,13 @@ export const useMCPServers = () => {
   const activedMcpServers = useMemo(() => mcpServers.filter((server) => server.isActive), [mcpServers]);
   const dispatch = useAppDispatch();
 
+   // Cast IpcChannel to any within hooks that might be called in web environment
+  const electronIpcChannel = IpcChannel as any;
+
   // In web environment, these functions might need to call API server instead of IPC
   const addServer = (server: MCPServer) => {
     if (isElectronRenderer && ipcRenderer) {
-      ipcRenderer.invoke(IpcChannel.Mcp_AddServer, server);
+      ipcRenderer.invoke(electronIpcChannel.Mcp_AddServer, server);
     } else {
       // TODO: Call API server to add server
       console.warn('TODO: Call API server to add server in web environment');
@@ -49,7 +55,7 @@ export const useMCPServers = () => {
 
   const updateServer = (server: MCPServer) => {
      if (isElectronRenderer && ipcRenderer) {
-      ipcRenderer.invoke(IpcChannel.Mcp_UpdateServer, server);
+      ipcRenderer.invoke(electronIpcChannel.Mcp_UpdateServer, server);
     } else {
       // TODO: Call API server to update server
       console.warn('TODO: Call API server to update server in web environment');
@@ -60,7 +66,7 @@ export const useMCPServers = () => {
 
   const deleteServer = (id: string) => {
     if (isElectronRenderer && ipcRenderer) {
-      ipcRenderer.invoke(IpcChannel.Mcp_DeleteServer, id);
+      ipcRenderer.invoke(electronIpcChannel.Mcp_DeleteServer, id);
     } else {
       // TODO: Call API server to delete server
       console.warn('TODO: Call API server to delete server in web environment');
@@ -71,7 +77,7 @@ export const useMCPServers = () => {
 
   const setServerActive = (server: MCPServer, isActive: boolean) => {
     if (isElectronRenderer && ipcRenderer) {
-      ipcRenderer.invoke(IpcChannel.Mcp_UpdateServer, { ...server, isActive });
+      ipcRenderer.invoke(electronIpcChannel.Mcp_UpdateServer, { ...server, isActive });
     } else {
       // TODO: Call API server to set server active state
       console.warn('TODO: Call API server to set server active state in web environment');
@@ -84,7 +90,7 @@ export const useMCPServers = () => {
 
   const updateMcpServers = (servers: MCPServer[]) => {
     if (isElectronRenderer && ipcRenderer) {
-      ipcRenderer.invoke(IpcChannel.Mcp_ServersChanged, servers);
+      ipcRenderer.invoke(electronIpcChannel.Mcp_ServersChanged, servers);
      } else {
       // TODO: Call API server to update all servers
       console.warn('TODO: Call API server to update all servers in web environment');
@@ -109,9 +115,12 @@ export const useMCPServer = (id: string) => {
   const server = useAppSelector((state) => (state.mcp.servers || []).find((server) => server.id === id));
   const dispatch = useAppDispatch();
 
+   // Cast IpcChannel to any within hooks that might be called in web environment
+  const electronIpcChannel = IpcChannel as any;
+
   const updateServer = (server: MCPServer) => {
      if (isElectronRenderer && ipcRenderer) {
-      ipcRenderer.invoke(IpcChannel.Mcp_UpdateServer, server);
+      ipcRenderer.invoke(electronIpcChannel.Mcp_UpdateServer, server);
     } else {
       // TODO: Call API server to update server
       console.warn('TODO: Call API server to update server in web environment');
@@ -122,7 +131,7 @@ export const useMCPServer = (id: string) => {
 
   const setServerActive = (server: MCPServer, isActive: boolean) => {
     if (isElectronRenderer && ipcRenderer) {
-      ipcRenderer.invoke(IpcChannel.Mcp_UpdateServer, { ...server, isActive });
+      ipcRenderer.invoke(electronIpcChannel.Mcp_UpdateServer, { ...server, isActive });
     } else {
       // TODO: Call API server to set server active state
       console.warn('TODO: Call API server to set server active state in web environment');
@@ -133,7 +142,7 @@ export const useMCPServer = (id: string) => {
 
   const deleteServer = (id: string) => {
     if (isElectronRenderer && ipcRenderer) {
-      ipcRenderer.invoke(IpcChannel.Mcp_DeleteServer, id);
+      ipcRenderer.invoke(electronIpcChannel.Mcp_DeleteServer, id);
     } else {
       // TODO: Call API server to delete server
       console.warn('TODO: Call API server to delete server in web environment');
