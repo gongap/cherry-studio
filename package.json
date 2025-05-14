@@ -34,6 +34,7 @@
     "build:linux:arm64": "dotenv electron-vite build && electron-builder --linux --arm64",
     "build:linux:x64": "dotenv electron-vite build && electron-builder --linux --x64",
     "build:npm": "node scripts/build-npm.js",
+    "build:static": "npx vite build --config vite.static.config.ts",
     "release": "node scripts/version.js",
     "publish": "yarn build:check && yarn release patch push",
     "pulish:artifacts": "cd packages/artifacts && npm publish && cd -",
