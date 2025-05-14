@@ -58,27 +58,33 @@ import { MinAppType } from '@renderer/types'
 
 // 加载自定义小应用
 const loadCustomMiniApp = async (): Promise<MinAppType[]> => {
-  try {
-    let content: string
+  // Check if running in an Electron environment
+  if (typeof window !== 'undefined' && typeof window.api !== 'undefined' && typeof window.api.file !== 'undefined') {
     try {
-      content = await window.api.file.read('custom-minapps.json')
+      let content: string
+      try {
+        content = await window.api.file.read('custom-minapps.json')
+      } catch (error) {
+        // 如果文件不存在，创建一个空的 JSON 数组
+        content = '[]'
+        await window.api.file.writeWithId('custom-minapps.json', content)
+      }
+
+      const customApps = JSON.parse(content)
+      const now = new Date().toISOString()
+
+      return customApps.map((app: any) => ({
+        ...app,
+        type: 'Custom',
+        logo: app.logo && app.logo !== '' ? app.logo : ApplicationLogo,
+        addTime: app.addTime || now
+      }))
     } catch (error) {
-      // 如果文件不存在，创建一个空的 JSON 数组
-      content = '[]'
-      await window.api.file.writeWithId('custom-minapps.json', content)
+      console.error('Failed to load custom mini apps:', error)
+      return []
     }
-
-    const customApps = JSON.parse(content)
-    const now = new Date().toISOString()
-
-    return customApps.map((app: any) => ({
-      ...app,
-      type: 'Custom',
-      logo: app.logo && app.logo !== '' ? app.logo : ApplicationLogo,
-      addTime: app.addTime || now
-    }))
-  } catch (error) {
-    console.error('Failed to load custom mini apps:', error)
+  } else {
+    // Return an empty array if not in Electron environment
     return []
   }
 }

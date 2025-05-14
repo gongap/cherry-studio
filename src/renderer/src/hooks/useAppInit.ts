@@ -34,22 +34,26 @@ export function useAppInit() {
   useEffect(() => {
     document.getElementById('spinner')?.remove()
     runAsyncFunction(async () => {
-      const { isPackaged } = await window.api.getAppInfo()
-      if (isPackaged && autoCheckUpdate) {
-        await delay(2)
-        const { updateInfo } = await window.api.checkForUpdate()
-        dispatch(setUpdateState({ info: updateInfo }))
+      if (typeof window !== 'undefined' && typeof window.api !== 'undefined') {
+        const { isPackaged } = await window.api.getAppInfo()
+        if (isPackaged && autoCheckUpdate) {
+          await delay(2)
+          const { updateInfo } = await window.api.checkForUpdate()
+          dispatch(setUpdateState({ info: updateInfo }))
+        }
       }
     })
   }, [dispatch, autoCheckUpdate])
 
   useEffect(() => {
-    if (proxyMode === 'system') {
-      window.api.setProxy('system')
-    } else if (proxyMode === 'custom') {
-      proxyUrl && window.api.setProxy(proxyUrl)
-    } else {
-      window.api.setProxy('')
+    if (typeof window !== 'undefined' && typeof window.api !== 'undefined') {
+      if (proxyMode === 'system') {
+        window.api.setProxy('system')
+      } else if (proxyMode === 'custom') {
+        proxyUrl && window.api.setProxy(proxyUrl)
+      } else {
+        window.api.setProxy('')
+      }
     }
   }, [proxyUrl, proxyMode])
 
@@ -79,11 +83,12 @@ export function useAppInit() {
   }, [])
 
   useEffect(() => {
-    // set files path
-    window.api.getAppInfo().then((info) => {
-      dispatch(setFilesPath(info.filesPath))
-      dispatch(setResourcesPath(info.resourcesPath))
-    })
+    if (typeof window !== 'undefined' && typeof window.api !== 'undefined') {
+      window.api.getAppInfo().then((info) => {
+        dispatch(setFilesPath(info.filesPath))
+        dispatch(setResourcesPath(info.resourcesPath))
+      })
+    }
   }, [dispatch])
 
   useEffect(() => {

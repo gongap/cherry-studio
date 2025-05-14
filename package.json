@@ -19,7 +19,8 @@
   },
   "scripts": {
     "start": "electron-vite preview",
-    "dev": "electron-vite dev",
+    "dev": "concurrently \"electron-vite dev\" \"yarn server:dev\"",
+    "server:dev": "tsx src/server/index.ts",
     "build": "npm run typecheck && electron-vite build",
     "build:check": "yarn test && yarn typecheck && yarn check:i18n",
     "build:unpack": "dotenv npm run build && electron-builder --dir",
@@ -153,6 +154,7 @@
     "axios": "^1.7.3",
     "babel-plugin-styled-components": "^2.1.4",
     "browser-image-compression": "^2.0.2",
+    "concurrently": "^9.1.2",
     "dayjs": "^1.11.11",
     "dexie": "^4.0.8",
     "dexie-react-hooks": "^1.1.7",

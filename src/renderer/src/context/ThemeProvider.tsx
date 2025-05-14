@@ -20,47 +20,65 @@ interface ThemeProviderProps extends PropsWithChildren {
   defaultTheme?: ThemeMode
 }
 
+// Define a helper to check for Electron renderer environment
+const isElectronRenderer = () =>
+  typeof window !== 'undefined' &&
+  typeof window.electron !== 'undefined' &&
+  typeof window.electron.ipcRenderer !== 'undefined';
+
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, defaultTheme }) => {
-  const { theme, setTheme } = useSettings()
-  const [effectiveTheme, setEffectiveTheme] = useState(theme)
+  const { theme, setTheme } = useSettings();
+  const [effectiveTheme, setEffectiveTheme] = useState(theme);
 
   const toggleTheme = () => {
-    // 主题顺序是light, dark, auto, 所以需要先判断当前主题，然后取下一个主题
     switch (theme) {
       case ThemeMode.light:
-        setTheme(ThemeMode.dark)
-        break
+        setTheme(ThemeMode.dark);
+        break;
       case ThemeMode.dark:
-        setTheme(ThemeMode.auto)
-        break
+        setTheme(ThemeMode.auto);
+        break;
       case ThemeMode.auto:
-        setTheme(ThemeMode.light)
-        break
+        setTheme(ThemeMode.light);
+        break;
     }
-  }
+  };
 
   useEffect(() => {
-    window.api?.setTheme(defaultTheme || theme)
-  }, [defaultTheme, theme])
+    // Only attempt to set theme via API if in Electron environment and window.api is available
+    if (isElectronRenderer() && window.api?.setTheme) {
+      window.api.setTheme(defaultTheme || theme);
+    }
+  }, [defaultTheme, theme]);
 
   useEffect(() => {
-    document.body.setAttribute('theme-mode', effectiveTheme)
-  }, [effectiveTheme])
+    document.body.setAttribute('theme-mode', effectiveTheme);
+  }, [effectiveTheme]);
 
   useEffect(() => {
-    document.body.setAttribute('os', isMac ? 'mac' : 'windows')
-    const themeChangeListenerRemover = window.electron.ipcRenderer.on(
-      IpcChannel.ThemeChange,
-      (_, realTheam: ThemeMode) => {
-        setEffectiveTheme(realTheam)
-      }
-    )
+    document.body.setAttribute('os', isMac ? 'mac' : 'windows');
+
+    let themeChangeListenerRemover: (() => void) | undefined;
+
+    // Only register IPC listener if in Electron environment and ipcRenderer is available
+    if (isElectronRenderer() && window.electron.ipcRenderer) {
+      themeChangeListenerRemover = window.electron.ipcRenderer.on(
+        IpcChannel.ThemeChange,
+        (_: any, realTheam: ThemeMode) => {
+          setEffectiveTheme(realTheam);
+        }
+      );
+    }
+
     return () => {
-      themeChangeListenerRemover()
-    }
-  })
+      // Only attempt to remove listener if it was registered
+      if (themeChangeListenerRemover) {
+        themeChangeListenerRemover();
+      }
+    };
+  }, []); // Empty dependency array to run once on mount and clean up on unmount
 
-  return <ThemeContext value={{ theme: effectiveTheme, settingTheme: theme, toggleTheme }}>{children}</ThemeContext>
-}
+  return <ThemeContext value={{ theme: effectiveTheme, settingTheme: theme, toggleTheme }}>{children}</ThemeContext>;
+};
 
-export const useTheme = () => use(ThemeContext)
+export const useTheme = () => use(ThemeContext);

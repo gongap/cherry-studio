@@ -1,3 +1,6 @@
+// This is a mock file for the static web build when using vite.static.config.ts
+// It provides properties expected by some renderer code that imports @shared/IpcChannel.
+
 export enum IpcChannel {
   App_ClearCache = 'app:clear-cache',
   App_SetLaunchOnBoot = 'app:set-launch-on-boot',
@@ -38,7 +41,6 @@ export enum IpcChannel {
   MiniWindow_SetPin = 'miniwindow:set-pin',
 
   // Mcp
-  Mcp_AddServer = 'mcp:add-server',
   Mcp_RemoveServer = 'mcp:remove-server',
   Mcp_RestartServer = 'mcp:restart-server',
   Mcp_StopServer = 'mcp:stop-server',
@@ -49,8 +51,9 @@ export enum IpcChannel {
   Mcp_ListResources = 'mcp:list-resources',
   Mcp_GetResource = 'mcp:get-resource',
   Mcp_GetInstallInfo = 'mcp:get-install-info',
-  Mcp_ServersChanged = 'mcp:servers-changed',
   Mcp_ServersUpdated = 'mcp:servers-updated',
+  Mcp_DeleteServer = 'mcp:delete-server',
+  Mcp_UpdateServer = 'mcp:update-server',
 
   //copilot
   Copilot_GetAuthMessage = 'copilot:get-auth-message',

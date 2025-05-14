@@ -7,19 +7,24 @@ export function useFullScreenNotice() {
   const { t } = useTranslation()
 
   useEffect(() => {
-    const cleanup = window.electron.ipcRenderer.on(IpcChannel.FullscreenStatusChanged, (_, isFullscreen) => {
-      if (isWindows && isFullscreen) {
-        window.message.info({
-          content: t('common.fullscreen'),
-          duration: 3,
-          key: 'fullscreen-notification'
-        })
-      }
-    })
+    // Check if running in an Electron environment before accessing window.electron.ipcRenderer
+    if (typeof window !== 'undefined' && typeof window.electron !== 'undefined' && typeof window.electron.ipcRenderer !== 'undefined') {
+      const cleanup = window.electron.ipcRenderer.on(IpcChannel.FullscreenStatusChanged, (_, isFullscreen) => {
+        if (isWindows && isFullscreen) {
+          window.message.info({
+            content: t('common.fullscreen'),
+            duration: 3,
+            key: 'fullscreen-notification'
+          })
+        }
+      })
 
-    return () => {
-      cleanup()
+      return () => {
+        cleanup()
+      }
     }
+    // If not in Electron, return a cleanup function that does nothing
+    return () => {}
   }, [t])
 }
 

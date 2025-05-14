@@ -38,11 +38,16 @@ const HomePage: FC = () => {
 
   useEffect(() => {
     const canMinimize = topicPosition == 'left' ? !showAssistants : !showAssistants && !showTopics
-    window.api.window.setMinimumSize(canMinimize ? 520 : 1080, 600)
+    // Check if running in an Electron environment before accessing window.api.window
+    if (typeof window !== 'undefined' && typeof window.api !== 'undefined' && typeof window.api.window !== 'undefined') {
+      window.api.window.setMinimumSize(canMinimize ? 520 : 1080, 600)
 
-    return () => {
-      window.api.window.resetMinimumSize()
+      return () => {
+        window.api.window.resetMinimumSize()
+      }
     }
+    // If not in Electron, return a cleanup function that does nothing
+    return () => {}
   }, [showAssistants, showTopics, topicPosition])
 
   return (
